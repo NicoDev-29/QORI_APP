@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "904230394024",
+    "project_id": "qori-4b6f3",
+    "storage_bucket": "qori-4b6f3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:904230394024:android:943e41c0f1afea384bca9d",
+        "android_client_info": {
+          "package_name": "com.example.qori"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbJDEspRpMPCeGGNym4gmDdYTLG-cMwVQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
