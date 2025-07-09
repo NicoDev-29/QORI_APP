@@ -46,10 +46,13 @@ class PresupuestoScreen extends StatelessWidget {
                 itemCount: data.length,
                 itemBuilder: (context, i) {
                   final p = data[i];
-                  final restante = provider.presupuestoCategoriaRestante(
-                    categoria: p.categoria,
-                    movimientosDelMes: movimientosDelMes,
-                  );
+                  // Filtra solo los movimientos de tipo "gasto" y de la categoría correspondiente
+                  final movimientosCategoriaDelMes = movimientosDelMes
+                      .where((m) => m.categoria == p.categoria && m.tipo.toLowerCase() == 'gasto')
+                      .toList();
+
+                  final gastos = movimientosCategoriaDelMes.fold(0.0, (sum, m) => sum + m.monto);
+                  final restante = (p.monto - gastos).clamp(0, p.monto);
                   final porcentaje = p.monto > 0 ? (restante / p.monto * 100).clamp(0, 100) : 0;
 
                   return ListTile(

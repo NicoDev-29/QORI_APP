@@ -44,118 +44,133 @@ class CuentaDetalleScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(14.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Resumen visual de la cuenta
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: AppColors.primaryLight,
-                      child: Icon(
-                        _getIconData(cuenta.icono),
-                        color: AppColors.primary,
-                        size: 32,
+      body: FutureBuilder<List<Movimiento>>(
+        future: MovimientoService().obtenerMovimientosPorCuenta(cuenta.id),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final movimientos = snapshot.data ?? [];
+          double totalIngresos = 0;
+          double totalEgresos = 0;
+          for (final m in movimientos) {
+            if (m.tipo.toLowerCase() == 'ingreso') {
+              totalIngresos += m.monto;
+            } else {
+              totalEgresos += m.monto;
+            }
+          }
+
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Resumen visual de la cuenta
+                      Card(
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 28,
+                                backgroundColor: AppColors.primaryLight,
+                                child: Icon(
+                                  _getIconData(cuenta.icono),
+                                  color: AppColors.primary,
+                                  size: 32,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(cuenta.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                                    Text(_getTipoText(cuenta.tipo), style: const TextStyle(fontSize: 14, color: Colors.black54)),
+                                    if (cuenta.nota != null && cuenta.nota!.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: Text('Nota: ${cuenta.nota!}', style: const TextStyle(fontSize: 12, color: Colors.black45)),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'S/. ${cuenta.saldo.toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                      color: cuenta.tipo == 'Crédito' ? Colors.red : AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                  Text(
+                                    cuenta.tipo == 'Crédito' ? 'Pasivo' : 'Activo',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: cuenta.tipo == 'Crédito' ? Colors.red : Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 16),
+                      // Indicadores de ingresos y egresos
+                      Row(
                         children: [
-                          Text(cuenta.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                          Text(_getTipoText(cuenta.tipo), style: const TextStyle(fontSize: 14, color: Colors.black54)),
-                          if (cuenta.nota != null && cuenta.nota!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text('Nota: ${cuenta.nota!}', style: const TextStyle(fontSize: 12, color: Colors.black45)),
-                            ),
+                          const Text('Movimientos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          const Spacer(),
+                          Row(
+                            children: [
+                              Icon(Icons.arrow_upward, color: Colors.red, size: 18),
+                              Text('S/. ${totalEgresos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                              const SizedBox(width: 10),
+                              Icon(Icons.arrow_downward, color: Colors.green, size: 18),
+                              Text('S/. ${totalIngresos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                            ],
+                          )
                         ],
                       ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'S/. ${cuenta.saldo.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            color: cuenta.tipo == 'Crédito' ? Colors.red : AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                        Text(
-                          cuenta.tipo == 'Crédito' ? 'Pasivo' : 'Activo',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: cuenta.tipo == 'Crédito' ? Colors.red : Colors.green,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            // Indicadores de ingresos y egresos
-            FutureBuilder<List<Movimiento>>(
-              future: MovimientoService().obtenerMovimientosPorCuenta(cuenta.id),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                final movimientos = snapshot.data ?? [];
-                double totalIngresos = 0;
-                double totalEgresos = 0;
-                for (final m in movimientos) {
-                  if (m.tipo.toLowerCase() == 'ingreso') {
-                    totalIngresos += m.monto;
-                  } else {
-                    totalEgresos += m.monto;
-                  }
-                }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('Movimientos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        const Spacer(),
-                        Row(
-                          children: [
-                            Icon(Icons.arrow_upward, color: Colors.red, size: 18),
-                            Text('S/. ${totalEgresos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                            const SizedBox(width: 10),
-                            Icon(Icons.arrow_downward, color: Colors.green, size: 18),
-                            Text('S/. ${totalIngresos.toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                          ],
-                        )
-                      ],
+              movimientos.isEmpty
+                  ? SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Text('No hay movimientos para esta cuenta.',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                      ),
+                    )
+                  : SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, idx) {
+                            // Agrupa por fecha si usas MovimientosAgrupadosPorFecha, si no, muestra lista simple:
+                            return MovimientosAgrupadosPorFecha(movimientos: movimientos);
+                          },
+                          childCount: 1,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    movimientos.isEmpty
-                        ? const Text('No hay movimientos para esta cuenta.')
-                        : MovimientosAgrupadosPorFecha(movimientos: movimientos),
-                  ],
-                );
-              },
-            ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -68,7 +68,6 @@ class PresupuestoProvider extends ChangeNotifier {
     return restante;
   }
 
-  /// 👇 NUEVO: calcula el total-restante usando la lista pasada por argumento (la del StreamBuilder)
   double presupuestoTotalRestanteConLista(
     List<Movimiento> movimientosDelMes,
     List<Presupuesto> presupuestos,

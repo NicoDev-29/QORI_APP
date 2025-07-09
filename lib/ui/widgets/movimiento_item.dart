@@ -43,9 +43,15 @@ class MovimientoItem extends StatelessWidget {
                     style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    movimiento.nota ?? '',
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  // Descripción con límite de ancho y salto de línea
+                  Expanded(
+                    child: Text(
+                      movimiento.nota ?? '',
+                      style: const TextStyle(fontSize: 12, color: Colors.black54),
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2, // Puedes ajustar el número de líneas
+                    ),
                   ),
                 ],
               )
@@ -53,6 +59,9 @@ class MovimientoItem extends StatelessWidget {
                 ? Text(
                     movimiento.nota!,
                     style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    softWrap: true,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2, // Ajusta según prefieras
                   )
                 : null,
         trailing: Column(
