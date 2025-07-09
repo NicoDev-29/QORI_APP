@@ -15,11 +15,10 @@ class TipoMovimientoSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final tipos = [TipoMovimiento.ingreso, TipoMovimiento.gasto];
     final etiquetas = ['Ingreso', 'Gasto'];
-    
-    // Colores para los tipos
+
     final colores = [
-      const Color(0xFF4CAF50), // Verde para ingresos
-      const Color(0xFFF44336), // Rojo para gastos
+      const Color(0xFF4CAF50), // Verde para ingreso
+      const Color(0xFFF44336), // Rojo para gasto
     ];
 
     return Row(

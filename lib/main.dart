@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => MovimientoProvider()),
         ChangeNotifierProvider(create: (_) => CuentaProvider()),
-        ChangeNotifierProvider(create: (_) => UserProvider()),       
+        ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => PresupuestoProvider()),
       ],
       child: MaterialApp(
@@ -41,14 +41,13 @@ class MyApp extends StatelessWidget {
         ],
         supportedLocales: const [Locale('es'), Locale('en')],
         locale: const Locale('es'),
-        // Eliminamos la propiedad home
         initialRoute: '/',
         routes: {
           '/': (context) => const MainNavigationWrapper(),
           '/registro': (context) => const AgregarMovimientoScreen(),
           '/agregar_cuenta': (context) => const AgregarCuentaScreen(),
           '/presupuestos': (context) => const PresupuestoScreen(),
-          // Mantén tus otras rutas si las necesitas
+          '/escaner': (context) => const CameraScreen(),
         },
       ),
     );
@@ -62,39 +61,144 @@ class MainNavigationWrapper extends StatefulWidget {
   State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
 }
 
-class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
+class _MainNavigationWrapperState extends State<MainNavigationWrapper>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
+  bool _showExtraButtons = false;
+  AnimationController? _animationController;
 
   final List<Widget> _screens = [
     const HomeScreen(),
     const HistorialScreen(),
-    const CuentasScreen(), 
+    const CuentasScreen(),
     const ChatbotScreen(),
     const PerfilScreen(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+  }
+
   void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
+      _showExtraButtons = false;
+      _animationController?.reverse();
+    });
+  }
+
+  void _toggleFab() {
+    setState(() {
+      _showExtraButtons = !_showExtraButtons;
+      if (_showExtraButtons) {
+        _animationController?.forward();
+      } else {
+        _animationController?.reverse();
+      }
     });
   }
 
   @override
+  void dispose() {
+    _animationController?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: Stack(
+        children: [
+          _screens[_currentIndex],
+
+          // Fondo oscuro al mostrar los botones extra
+          if (_showExtraButtons)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _toggleFab,
+                child: Container(color: Colors.black.withOpacity(0.3)),
+              ),
+            ),
+
+          // Botón billetera: VERDE con ícono blanco, redondo
+          if (_showExtraButtons && _animationController != null)
+            Positioned(
+              bottom: 96,
+              left: MediaQuery.of(context).size.width / 1.13 - 28,
+              child: ScaleTransition(
+                scale: CurvedAnimation(
+                  parent: _animationController!,
+                  curve: Curves.easeOutBack,
+                ),
+                child: FloatingActionButton(
+                  heroTag: 'walletBtn',
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/registro');
+                    setState(() => _showExtraButtons = false);
+                  },
+                  backgroundColor: Colors.green,
+                  shape: const CircleBorder(), // asegura forma circular
+                  child: const Icon(
+                    Icons.account_balance_wallet,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              ),
+            ),
+
+          // Botón cámara: MORADO con ícono blanco, redondo
+          if (_showExtraButtons && _animationController != null)
+            Positioned(
+              bottom: 15, // mismo nivel que el FAB1
+              left:
+                  MediaQuery.of(context).size.width / 1.16 -
+                  96, // 56 (FAB) + 12 (espacio) + 28 (mitad de FAB secundario)
+              child: ScaleTransition(
+                scale: CurvedAnimation(
+                  parent: _animationController!,
+                  curve: Curves.easeOutBack,
+                ),
+                child: FloatingActionButton(
+                  heroTag: 'cameraBtn',
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/escaner');
+                    setState(() => _showExtraButtons = false);
+                  },
+                  backgroundColor: Colors.deepPurple,
+                  shape: const CircleBorder(), // asegura forma circular
+                  child: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationWidget(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
       ),
       floatingActionButton:
-          _currentIndex == 0 || _currentIndex == 1
+          (_currentIndex == 0 || _currentIndex == 1)
               ? FloatingActionButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/registro');
-                },
+                heroTag: 'mainFab',
+                onPressed: _toggleFab,
                 backgroundColor: AppColors.primary,
-                child: const Icon(Icons.add, color: Colors.white),
+                child: Icon(
+                  _showExtraButtons ? Icons.close : Icons.add,
+                  size: 30,
+                  color: Colors.white, // ¡ahora siempre será blanco!
+                ),
               )
               : null,
     );
