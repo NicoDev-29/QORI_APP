@@ -5,7 +5,7 @@ import 'package:qori/constants/categoria_constants.dart';
 import 'package:qori/providers/movimiento_provider.dart';
 import 'package:qori/models/movimiento.dart';
 import 'package:qori/ui/widgets/widgets_export.dart';
-import 'package:qori/providers/cuenta_provider.dart'; // NUEVO
+import 'package:qori/providers/cuenta_provider.dart';
 
 class AgregarMovimientoScreen extends StatefulWidget {
   const AgregarMovimientoScreen({Key? key}) : super(key: key);
@@ -23,6 +23,53 @@ class _AgregarMovimientoScreenState extends State<AgregarMovimientoScreen> {
   String? _categoriaSeleccionada;
   String? _cuentaSeleccionada;
   bool _guardando = false;
+
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  final args = ModalRoute.of(context)?.settings.arguments;
+
+  if (args is Map<String, dynamic>) {
+    final tipo = args['tipo'];
+    final monto = args['monto'];
+    final categoria = args['categoria'];
+    final nota = args['nota'];
+    final fecha = args['fecha'];
+
+
+    setState(() {
+      print('🧪 Tipo moto: $monto'); // 👈 AÑADE ESTO
+
+      print('🧪 Tipo recibido: $tipo'); // 👈 AÑADE ESTO
+
+      if (tipo is String && (tipo == 'Gasto' || tipo == 'Ingreso')) {
+        _tipoMovimiento = tipo;
+      }
+
+      if (monto is String || monto is double) {
+        _montoController.text = monto.toString();
+      }
+
+      if (categoria is String) {
+        _categoriaSeleccionada = categoria;
+      }
+
+      if (nota is String) {
+        _notaController.text = nota;
+      }
+
+      if (fecha is DateTime) {
+        _fechaSeleccionada = fecha;
+      }
+
+      // Si viene desde QR o escaneo y aún no hay cuenta seleccionada, usar la primera
+      final cuentas = Provider.of<CuentaProvider>(context, listen: false).cuentas;
+      if (_cuentaSeleccionada == null && cuentas.isNotEmpty) {
+        _cuentaSeleccionada = cuentas.first.id;
+      }
+    });
+  }
+}
 
   List<Map<String, dynamic>> get categoriasDisponibles =>
       CategoriasConstants.getCategoriasPorTipo(_tipoMovimiento);
@@ -49,7 +96,7 @@ class _AgregarMovimientoScreenState extends State<AgregarMovimientoScreen> {
         return;
       }
 
-      setState(() { _guardando = true; });
+      setState(() => _guardando = true);
 
       final movimiento = Movimiento(
         id: '',
@@ -57,20 +104,19 @@ class _AgregarMovimientoScreenState extends State<AgregarMovimientoScreen> {
         categoria: _categoriaSeleccionada!,
         monto: double.parse(_montoController.text),
         nota: _notaController.text.isEmpty ? null : _notaController.text,
-        cuentaId: _cuentaSeleccionada!, // NUEVO
+        cuentaId: _cuentaSeleccionada!,
         createdAt: Timestamp.now(),
       );
 
       try {
         await context.read<MovimientoProvider>().agregarMovimiento(movimiento);
-
         _mostrarConfirmacion('¡Movimiento guardado exitosamente!');
         await Future.delayed(const Duration(milliseconds: 1500));
         if (mounted) Navigator.pop(context);
       } catch (e) {
         _mostrarError('Error al guardar: $e');
       } finally {
-        if (mounted) setState(() { _guardando = false; });
+        if (mounted) setState(() => _guardando = false);
       }
     }
   }
@@ -136,7 +182,6 @@ class _AgregarMovimientoScreenState extends State<AgregarMovimientoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Selector de cuenta
               const Text('Cuenta', style: TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
@@ -153,13 +198,12 @@ class _AgregarMovimientoScreenState extends State<AgregarMovimientoScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('${cuenta.nombre}'),
+                        Text(cuenta.nombre),
                         Text(
                           'S/. ${cuenta.saldo.toStringAsFixed(2)}',
                           style: TextStyle(
                             color: cuenta.tipo.toLowerCase() == 'credito' ? Colors.red : Colors.green,
                             fontSize: 13,
-                            fontWeight: FontWeight.w400,
                           ),
                         ),
                       ],
@@ -170,7 +214,6 @@ class _AgregarMovimientoScreenState extends State<AgregarMovimientoScreen> {
                 validator: (value) => value == null ? 'Selecciona una cuenta' : null,
               ),
               const SizedBox(height: 16),
-              // ... (el resto de los campos iguales)
               const Text('Tipo de Movimiento', style: TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 10),
               TipoMovimientoSelector(
